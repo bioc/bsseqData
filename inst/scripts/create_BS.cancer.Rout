@@ -1,0 +1,108 @@
+
+R version 2.15.1 Patched (2012-07-01 r59713) -- "Roasted Marshmallows"
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(bsseq)
+Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+The following object(s) are masked from ‘package:stats’:
+
+    xtabs
+
+The following object(s) are masked from ‘package:base’:
+
+    anyDuplicated, cbind, colnames, duplicated, eval, Filter, Find,
+    get, intersect, lapply, Map, mapply, mget, order, paste, pmax,
+    pmax.int, pmin, pmin.int, Position, rbind, Reduce, rep.int,
+    rownames, sapply, setdiff, table, tapply, union, unique
+
+Loading required package: IRanges
+Loading required package: GenomicRanges
+Loading required package: parallel
+Loading required package: matrixStats
+matrixStats v0.5.2 (2012-07-02) successfully loaded. See ?matrixStats for help.
+> library(tools) ## for resaveRdaFiles below
+> 
+> sampleNames <- list.files("../umtab")
+> dirs <- file.path("../umtab", sampleNames, "umtab")
+> 
+> umData <- read.umtab(dirs, sampleNames)
+reading ../umtab/C1/umtab/21.umtab.gz 
+reading ../umtab/C2/umtab/21.umtab.gz 
+reading ../umtab/C3/umtab/21.umtab.gz 
+reading ../umtab/N1/umtab/21.umtab.gz 
+reading ../umtab/N2/umtab/21.umtab.gz 
+reading ../umtab/N3/umtab/21.umtab.gz 
+reading ../umtab/C1/umtab/22.umtab.gz 
+reading ../umtab/C2/umtab/22.umtab.gz 
+reading ../umtab/C3/umtab/22.umtab.gz 
+reading ../umtab/N1/umtab/22.umtab.gz 
+reading ../umtab/N2/umtab/22.umtab.gz 
+reading ../umtab/N3/umtab/22.umtab.gz 
+> 
+> BS.cancer.ex <- umData$BSdata
+> seqlevels(BS.cancer.ex) <- paste0("chr", seqlevels(BS.cancer.ex))
+> pData(BS.cancer.ex)$Type <- rep(c("cancer", "normal"), times = c(3,3))
+> pData(BS.cancer.ex)$Pair <- rep(c("pair1", "pair2", "pair3"), 2)
+> validObject(BS.cancer.ex)
+[1] TRUE
+> BS.cancer.ex <- chrSelectBSseq(BS.cancer.ex,
++                                seqnames = c("chr21", "chr22"), order = TRUE)
+> save(BS.cancer.ex, file = "BS.cancer.ex.rda")
+> resaveRdaFiles("BS.cancer.ex.rda") ## additional compression
+> 
+> ## Assumes you have 6 cores available, and enough RAM
+> BS.cancer.ex.fit <- BSmooth(BS.cancer.ex, ns = 70, h = 1000,
++                             mc.cores = 6, verbose = TRUE)
+preprocessing ... done in 2.5 sec
+smoothing by 'sample' (mc.cores = 6, mc.preschedule = FALSE)
+  sample N2 (out of 6), done in 99.6 sec
+  sample C3 (out of 6), done in 104.1 sec
+  sample N3 (out of 6), done in 105.9 sec
+  sample C2 (out of 6), done in 106.6 sec
+  sample N1 (out of 6), done in 106.7 sec
+  sample C1 (out of 6), done in 134.3 sec
+smoothing done in 135.5 sec
+> save(BS.cancer.ex.fit, file = "BS.cancer.ex.fit.rda")
+> resaveRdaFiles("BS.cancer.ex.fit.rda") ## additional compression
+> 
+> BS.cov <- getCoverage(BS.cancer.ex.fit)
+> keepLoci.ex <- which(rowSums(BS.cov[, c("C1", "C2", "C3")] >= 2) >= 2 &
++                      rowSums(BS.cov[, c("N1", "N2", "N3")] >= 2) >= 2)
+> save(keepLoci.ex, file = "keepLoci.ex.rda")
+> resaveRdaFiles("keepLoci.ex.rda")
+> 
+> BS.cancer.ex.tstat <- BSmooth.tstat(BS.cancer.ex.fit[keepLoci.ex,], 
++                                     group1 = c("C1", "C2", "C3"),
++                                     group2 = c("N1", "N2", "N3"), 
++                                     estimate.var = "group2",
++                                     local.correct = TRUE,
++                                     verbose = TRUE)
+preprocessing ... done in 1.6 sec
+computing stats within groups ... done in 0.9 sec
+computing stats across groups ... done in 3.6 sec
+> save(BS.cancer.ex.tstat, file = "BS.cancer.ex.tstat.rda")
+> resaveRdaFiles("BS.cancer.ex.tstat.rda")
+> 
+> 
+> proc.time()
+   user  system elapsed 
+902.944  21.980 550.606 
