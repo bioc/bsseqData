@@ -1,5 +1,5 @@
 Package: bsseqData
-Version: 0.1.2
+Version: 0.1.3
 Title: Example whole genome bisulfite data for the bsseq package
 Description: Example whole genome bisulfite data for the bsseq package
 Author: Kasper Daniel Hansen
