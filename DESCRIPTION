@@ -1,5 +1,5 @@
 Package: bsseqData
-Version: 0.33.0
+Version: 0.33.1
 Title: Example whole genome bisulfite data for the bsseq package
 Description: Example whole genome bisulfite data for the bsseq package
 Author: Kasper Daniel Hansen
@@ -8,4 +8,3 @@ Depends: R (>= 2.15), bsseq (>= 1.16.0)
 License: Artistic-2.0
 LazyData: yes
 biocViews: Genome, CancerData, ColonCancerData, SequencingData
-Packaged: 2012-07-04 15:42:28 UTC; khansen
